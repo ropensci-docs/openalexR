@@ -1,0 +1,12 @@
+{
+  "commit": {
+    "commit": "12f1e703dd18c6868d45a421ad49e413506a897a",
+    "author": "Trang Le <grixor@gmail.com>",
+    "time": "2023-03-13 14:33:10",
+    "files": 4,
+    "merge": true,
+    "message": "Merge pull request #86 from ropensci/maelle-patch-2\n\nUpdate pkgdown URL"
+  },
+  "repo": "https://github.com/ropensci/openalexR",
+  "pkg": "openalexR"
+}
