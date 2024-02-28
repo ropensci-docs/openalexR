@@ -1,0 +1,12 @@
+{
+  "commit": {
+    "commit": "558581c6dbb43c65cd2003be8545e88fd4ed4ef7",
+    "author": "June Choe <52832839+yjunechoe@users.noreply.github.com>",
+    "time": "2024-02-28 22:03:30",
+    "files": 2,
+    "merge": true,
+    "message": "Merge pull request #214 from yjunechoe/paper-topics\n\nadd Work `topics` field"
+  },
+  "repo": "https://github.com/ropensci/openalexR",
+  "pkg": "openalexR"
+}
