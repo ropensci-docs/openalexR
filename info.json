@@ -1,0 +1,12 @@
+{
+  "commit": {
+    "commit": "42f4d1678574f61108dfb5f21c7ad4271c242295",
+    "author": "Trang Le <grixor@gmail.com>",
+    "time": "2024-10-16 14:56:43",
+    "files": 3,
+    "merge": false,
+    "message": "A search vignette (#289)\n\n* a search vignette, working on #287\r\n"
+  },
+  "repo": "https://github.com/ropensci/openalexR",
+  "pkg": "openalexR"
+}
