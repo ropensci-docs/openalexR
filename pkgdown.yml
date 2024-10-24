@@ -1,0 +1,14 @@
+pandoc: 3.2.1
+pkgdown: 2.1.0
+pkgdown_sha: ~
+articles:
+  articles/A_Brief_Introduction_to_openalexR: A_Brief_Introduction_to_openalexR.html
+  articles/About-the-tibble-output: About-the-tibble-output.html
+  articles/Filters: Filters.html
+  articles/institution: institution.html
+  articles/literature-search: literature-search.html
+  articles/performance-optimization: performance-optimization.html
+last_built: 2024-10-24T18:18Z
+urls:
+  reference: https://docs.ropensci.org/openalexR/reference
+  article: https://docs.ropensci.org/openalexR/articles

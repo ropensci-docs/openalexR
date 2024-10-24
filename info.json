@@ -1,0 +1,12 @@
+{
+  "commit": {
+    "commit": "6beed9b917a8f20e42c62f5a396b347e7e9e4633",
+    "author": "June Choe <52832839+yjunechoe@users.noreply.github.com>",
+    "time": "2024-10-24 18:13:06",
+    "files": 3,
+    "merge": false,
+    "message": "Add apc information (#212)\n\n* add apc column\r\n\r\n* handle NULL\r\n\r\n* initialize apc as null\r\n\r\n* update test\r\n\r\n---------\r\n\r\nCo-authored-by: Trang Le <grixor@gmail.com>\r\nCo-authored-by: let20 <trang.le@bms.com>"
+  },
+  "repo": "https://github.com/ropensci/openalexR",
+  "pkg": "openalexR"
+}
