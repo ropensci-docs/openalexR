@@ -1,0 +1,259 @@
+# Changelog
+
+## openalexR (development version)
+
+- Recorded OpenAlex’s new `apc_usd_by_year` field for the `sources`
+  entity in `oa2df_coverage`. It is listed as a known field that
+  [`oa2df()`](https://docs.ropensci.org/openalexR/reference/oa2df.md)
+  does not surface, so `get_coverage("sources")` no longer under-reports
+  the API.
+- Dropped support for the `mailto` polite pool, which OpenAlex retired
+  in February 2026 and now ignores. `oa_email()` and the
+  `openalexR.mailto` option are gone, and `mailto` is no longer sent to
+  the API. The `mailto` argument of
+  [`oa_fetch()`](https://docs.ropensci.org/openalexR/reference/oa_fetch.md),
+  [`oa_request()`](https://docs.ropensci.org/openalexR/reference/oa_request.md)
+  and
+  [`oa_snowball()`](https://docs.ropensci.org/openalexR/reference/oa_snowball.md)
+  is kept as a deprecated no-op that warns – removing it outright would
+  turn `mailto =` into a silent, bogus filter, since
+  [`oa_fetch()`](https://docs.ropensci.org/openalexR/reference/oa_fetch.md)
+  collects filters via `...`. Use `options(openalexR.apikey = )`
+  instead.
+- [`show_works()`](https://docs.ropensci.org/openalexR/reference/show_works.md)
+  and
+  [`show_authors()`](https://docs.ropensci.org/openalexR/reference/show_authors.md)
+  no longer fail with `incorrect number of dimensions` when given `NULL`
+  – which is what
+  [`oa_fetch()`](https://docs.ropensci.org/openalexR/reference/oa_fetch.md)
+  returns when a query matches no records or a request fails. They now
+  warn and return a zero-row tibble, and give an informative error for
+  input that is not a data frame or is missing required columns
+  ([\#368](https://github.com/ropensci/openalexR/issues/368)).
+- [`oa_fetch()`](https://docs.ropensci.org/openalexR/reference/oa_fetch.md)
+  and friends now retry transient HTTP responses – 429 (Too Many
+  Requests) and the 502/503/504 gateway errors – with exponential
+  backoff, honoring the `Retry-After` header when the API sends one.
+  Configure with `options(openalexR.max_tries = )` (default 3, max 10)
+  and `options(openalexR.max_wait = )` (default 30 seconds), or the
+  equivalent `openalexR.max_tries` / `openalexR.max_wait` environment
+  variables. Set `openalexR.max_tries = 1` to disable retrying
+  ([\#368](https://github.com/ropensci/openalexR/issues/368)).
+- Failed HTTP requests (429, 503, and other non-200 statuses) now emit a
+  **warning** rather than a message, so they are no longer easy to miss
+  in scripts, reports, and knitted documents. If you relied on
+  [`suppressMessages()`](https://rdrr.io/r/base/message.html) to quiet
+  these, use [`suppressWarnings()`](https://rdrr.io/r/base/warning.html)
+  instead ([\#368](https://github.com/ropensci/openalexR/issues/368)).
+- [`oa_request()`](https://docs.ropensci.org/openalexR/reference/oa_request.md)
+  now warns when the API returns an empty body instead of quietly
+  returning an empty list
+  ([\#368](https://github.com/ropensci/openalexR/issues/368)).
+- Fixed HTTP error handling for paged requests: a 4xx/5xx or 503
+  response during paging previously raised an internal `jsonlite` error
+  instead of the intended OpenAlex error message.
+- Fixed
+  [`oa_fetch()`](https://docs.ropensci.org/openalexR/reference/oa_fetch.md)
+  discarding results when the *first* chunk of a filter with more than
+  50 values came back empty.
+- The pkgdown articles are now precomputed from `.Rmd.orig` sources, so
+  building the documentation site no longer calls the OpenAlex API. Run
+  `Rscript data-raw/precompute-articles.R` (or the `precompute-articles`
+  GitHub Action) after editing an article
+  ([\#368](https://github.com/ropensci/openalexR/issues/368)).
+- [`sources2df()`](https://docs.ropensci.org/openalexR/reference/sources2df.md)
+  now includes the new `is_preprint_repository` field returned by the
+  OpenAlex sources endpoint.
+
+## openalexR 3.1.0
+
+CRAN release: 2026-07-03
+
+- New
+  [`oa_options()`](https://docs.ropensci.org/openalexR/reference/oa_options.md)
+  constructor for building the `options` argument of
+  [`oa_fetch()`](https://docs.ropensci.org/openalexR/reference/oa_fetch.md)
+  and
+  [`oa_query()`](https://docs.ropensci.org/openalexR/reference/oa_query.md).
+  It provides argument autocompletion, defaults, and validation
+  (e.g. catches misspelled options and out-of-range
+  `sample`/`per_page`), while a plain
+  [`list()`](https://rdrr.io/r/base/list.html) is still accepted for
+  backward compatibility
+  ([\#182](https://github.com/ropensci/openalexR/issues/182)).
+- Paging parameters `per_page`, `paging`, and `pages` are now set
+  through `options = oa_options(...)`. Passing them as top-level
+  arguments to
+  [`oa_fetch()`](https://docs.ropensci.org/openalexR/reference/oa_fetch.md)
+  is deprecated but still works (with a warning).
+- [`oa_fetch()`](https://docs.ropensci.org/openalexR/reference/oa_fetch.md)
+  now errors when more than one filter has over 50 values, since only
+  one such filter can be chunked per call.
+
+## openalexR 3.0.1
+
+CRAN release: 2026-01-14
+
+- Fix CRAN R CMD check issues
+
+## openalexR 3.0.0
+
+CRAN release: 2026-01-10
+
+- Updates for new OpenAlex Walden `data-version=2`
+- Add cli to Imports
+
+## openalexR 2.0.2
+
+CRAN release: 2025-10-21
+
+- Fix CRAN R CMD check issues
+
+## openalexR 2.0.0
+
+CRAN release: 2025-04-05
+
+- Breaking changes in column names in the output of `oa_fetch`:
+
+  - Works:
+    - `so` is now `source_display_name`
+    - `so_id` is now `source_id`
+    - `host_organization` now contains the id of the host organization
+    - `host_organization_name` now contains the name of the host
+      organization
+    - `ab` is now `abstract`
+    - `url` is now `landing_page_url`
+    - `author` is now `authorships`
+    - the nested columns under `authors` no longer have the `au` prefix
+    - New columns: `fwci`, `referenced_works_count`, `keywords`
+  - Authors:
+    - `affiliation*` is removed
+    - New columns: `last_known_institutions`, `2yr_mean_citedness`,
+      `h_index`, `i10_index`
+
+- Removed `concepts` as an entity
+
+- Added `keywords` as an entity
+
+- Added
+  [`get_coverage()`](https://docs.ropensci.org/openalexR/reference/get_coverage.md)
+  to track the oa2df-mapped columns of OpenAlex fields
+
+- Deprecated
+  [`oa2bibliometrix()`](https://docs.ropensci.org/openalexR/reference/oa2bibliometrix.md).
+  Use `bibliometrix::convert2df()` (from the **bibliometrix** R package)
+  instead.
+
+## openalexR 1.4.0
+
+CRAN release: 2024-07-11
+
+- “topics” are now a valid entity in oa_fetch
+- The column “topics” replaces concepts in most entities’ returned
+  dataframes
+- For Works, “topics” and “concepts” are now returned as separate
+  columns
+
+## openalexR 1.3.1
+
+CRAN release: 2024-05-08
+
+- solved bug in au_affiliation_raw in PR#241
+
+## openalexR 1.3.0
+
+CRAN release: 2024-05-03
+
+- Breaking change: two arguments in `oa_snowball` are renamed:
+  `citing_filter` is now `citing_params`, and `cited_by_filter` is now
+  `cited_by_params`.
+- Introduced `oa_generate`: A generator function to make request to
+  OpenAlex API and returns one record at a time.
+- Fixed queries with `group_by`.
+- Improved paging control: the user can now specify the `pages` they
+  want in `oa_fetch` or `oa_request`.
+- Improve `oa_snowball` performance.
+- Allowed the use of `options$sample` with `search`.
+- “venues” is no longer a valid value for `entity`. Use “sources”
+  instead.
+
+## openalexR 1.2.2
+
+CRAN release: 2023-09-24
+
+- solved issue with CRAN test
+
+## openalexR 1.2.1
+
+CRAN release: 2023-09-01
+
+- many improvements in bibliometrix support
+- solved issue with CRAN test
+
+## openalexR 1.2.0
+
+CRAN release: 2023-08-08
+
+- many improvements in oa_snowball
+- added new openalex entities
+- solved CRAN issue about packageVersion()
+
+## openalexR 1.1.0
+
+CRAN release: 2023-05-04
+
+- Basic paging is applied when using options\$sample
+- Bug fixes for rbind in oa2df
+
+## openalexR 1.0.2.9
+
+CRAN release: 2023-04-01
+
+- Breaking change: Reorder of the first two arguments in `oa_fetch`:
+  `entity` now comes before `idenfitifier`. This should not affect your
+  workflow too much unless you have been getting article information
+  from OpenAlex IDs.
+- new arguments to `oa_fetch`: `sample` and `seed` allows the user to
+  download a random subset of the entities instead of the entire set.
+- `oa_ngrams` gets you N-grams of works
+- `abstract` now defaults to TRUE to avoid issues.
+- New argument to oa_fetch: api_key
+- Arguments sample, seed, sort, and select are now grouped into
+  `options`.
+- Bug fixes
+- Improved documentation: group functions in Reference, details on
+  search, etc.
+
+## openalexR 1.0.1
+
+- Improve `snowball`
+  [\#9](https://github.com/ropensci/openalexR/issues/9).
+- Batch queries when a filter has more than 50 values
+  [\#18](https://github.com/ropensci/openalexR/issues/18).
+- Bug fixes.
+- Added a `NEWS.md` file to track changes to the package.
+
+## openalexR 1.0.0
+
+CRAN release: 2022-10-06
+
+- Breaking change: now uses a more canonical way to filter
+  [\#7](https://github.com/ropensci/openalexR/issues/7).
+- In `oa_fetch`, `abstract` now defaults to FALSE to save compute/query
+  time/space. You will need to set `abstract = TRUE` to retrieve
+  abstracts for the articles.
+- Added website, hex.
+- Added tests.
+- Added R CMD CHECK as a GH Action
+- Bug fixes.
+- Added vignettes.
+
+## openalexR 0.0.2
+
+- Some bug fixes
+
+## openalexR 0.0.1
+
+CRAN release: 2022-04-22
+
+- First CRAN release

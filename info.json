@@ -1,0 +1,13 @@
+{
+  "commit": {
+    "commit": "5ae07179ffd1179404cfb0a48b5640739f9652b4",
+    "author": "Trang Le <trang.le@bms.com>",
+    "time": "2026-09-02T01:49:13Z",
+    "files": 0,
+    "merge": false,
+    "message": "trigger build\n"
+  },
+  "repo": "https://github.com/ropensci/openalexR",
+  "pkg": "openalexR",
+  "time": "2026-09-02T10:01:48Z"
+}
