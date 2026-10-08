@@ -1,0 +1,13 @@
+{
+  "commit": {
+    "commit": "1b660d9de74ff0f1f16929f2c99acb7344144f93",
+    "author": "lelaboratoire <grixor@gmail.com>",
+    "time": "2026-10-08T16:54:49Z",
+    "files": 2,
+    "merge": false,
+    "message": "Release openalexR 3.1.1\n"
+  },
+  "repo": "https://github.com/ropensci/openalexR",
+  "pkg": "openalexR",
+  "time": "2026-10-08T22:20:36Z"
+}

@@ -1,0 +1,372 @@
+# Performance and optimization
+
+While
+[`oa_fetch()`](https://docs.ropensci.org/openalexR/reference/oa_fetch.md)
+offers a convenient and flexible way of retrieving results from queries
+to the OpenAlex API, its defaults may not be best suited for heavier
+workflows that involve fetching records in the magnitude of tens or
+hundreds of thousands of entities.
+
+Optimizing the performance of such large queries benefits greatly from
+being intentional and specific about what kinds of information you care
+about, and making assumptions that let you safely take shortcuts around
+the defaults.
+
+This vignette discusses three strategies for optimizing performance of
+large queries:
+
+- The parameter `options = oa_options(select = ...)` in
+  [`oa_fetch()`](https://docs.ropensci.org/openalexR/reference/oa_fetch.md)
+- The argument `output = "list"` in
+  [`oa_fetch()`](https://docs.ropensci.org/openalexR/reference/oa_fetch.md)
+- The function
+  [`oa_generate()`](https://docs.ropensci.org/openalexR/reference/oa_generate.md)
+
+``` r
+
+library(openalexR)
+library(dplyr)
+```
+
+## The `select` strategy
+
+The `options` argument of
+[`oa_fetch()`](https://docs.ropensci.org/openalexR/reference/oa_fetch.md)
+specifies additional parameters to add to the query, such as `select`,
+`sort`, `sample`, and `seed`. It is best constructed with the
+[`oa_options()`](https://docs.ropensci.org/openalexR/reference/oa_options.md)
+helper, which documents and validates the available options (a plain
+[`list()`](https://rdrr.io/r/base/list.html) is still accepted for
+backward compatibility). Of these, `select` can be used to specify which
+fields of the entities are to be returned by OpenAlex. By specifying
+only the kinds of information about entities that you care about, you
+can reduce the overall size of the query result, which will in turn
+speed up the fetching of the raw JSON and its conversion to a data
+frame.
+
+For example, suppose that we are looking for a sample of works from the
+[Topic](https://developers.openalex.org/api-reference/topics) of
+[Language Development and Acquisition in
+Children](https://openalex.org/topics/T10730) (`"T10730"`).
+
+``` r
+
+language_development <- oa_fetch(
+  entity = "topics",
+  search = "Language Development and Acquisition in Children"
+)[1,1:2]
+language_development
+#> # A tibble: 1 × 2
+#>   id                          display_name                      
+#>   <chr>                       <chr>                             
+#> 1 https://openalex.org/T10730 Language Development and Disorders
+```
+
+To sample some papers from this topic, we can use the `topics.id`
+[filter](https://docs.ropensci.org/openalexR/articles/Filters.html) and
+set `options = oa_options(sample = 5, seed = 1)` to return a random set
+of five [Works](https://developers.openalex.org/api-reference/works)
+entities with a reproducible seed:
+
+``` r
+
+oa_fetch(
+  entity = "works",
+  topics.id = language_development$id,
+  options = oa_options(sample = 5, seed = 1)
+) %>% 
+  show_works()
+#> # A tibble: 5 × 6
+#>   id          display_name           first_author last_author is_oa top_concepts
+#>   <chr>       <chr>                  <chr>        <chr>       <lgl> <chr>       
+#> 1 W2270738576 Issues for acquisition Eve V. Clark <NA>        FALSE Computer sc…
+#> 2 W2539738643 Shame and guilt. The … Luce Bolomey Judith Hoh… FALSE Shame, Feel…
+#> 3 W7204471660 Working memory, updat… Fatbardha Q… Elma Beris… FALSE Association…
+#> 4 W4390202566 Narrative Microstruct… Mohyeddin T… Katayoon R… TRUE  Narrative, …
+#> 5 W3192646676 Parent Language Input… Ö. Ece Demi… Susan Gold… TRUE  Cognition, …
+```
+
+In OpenAlex, entities have a set of **fields** which represent various
+information about them. These are typically returned as data frame
+columns by
+[`oa_fetch()`](https://docs.ropensci.org/openalexR/reference/oa_fetch.md),
+and the full list of fields can be found in the API documentation for
+each entity. For example, [the fields in a Works
+object](https://developers.openalex.org/api-reference/works) contain
+information such as `id`, `display_name`, `authorships`, and so on.
+
+If we only cared about the above three fields from our sample of papers,
+we can simply specify those fields in the `select` parameters of the
+`options` list of arguments:
+
+``` r
+
+oa_fetch(
+  entity = "works",
+  topics.id = language_development$id,
+  options = oa_options(sample = 5, seed = 1,
+                 select = c("id", "display_name", "authorships"))
+)
+#> # A tibble: 5 × 3
+#>   id                               display_name                      authorships
+#>   <chr>                            <chr>                             <list>     
+#> 1 https://openalex.org/W2270738576 Issues for acquisition            <tibble>   
+#> 2 https://openalex.org/W2539738643 Shame and guilt. The birth of a … <tibble>   
+#> 3 https://openalex.org/W7204471660 Working memory, updating and voc… <tibble>   
+#> 4 https://openalex.org/W4390202566 Narrative Microstructure and Mac… <tibble>   
+#> 5 https://openalex.org/W3192646676 Parent Language Input Prior to S… <tibble>
+```
+
+This returns the scalar fields `id` and `display_name` in their
+appropriate data types (character) in the dataframe. Additionally, the
+`authorships` field has been further processed as a list-column of data
+frames, to fit nicely into the “tidy” data frame structure.
+
+Specifying the desired fields up front in this way is not only
+convenient but also more performant, as there will be less data for
+[`oa_fetch()`](https://docs.ropensci.org/openalexR/reference/oa_fetch.md)
+to process.
+
+## The `output = "list"` strategy
+
+By default,
+[`oa_fetch()`](https://docs.ropensci.org/openalexR/reference/oa_fetch.md)
+uses `output = "tibble"`, which returns a processed `tibble` data frame
+of the results. In such cases, the JSON response from OpenAlex is first
+converted to an R list, then a data frame via
+[`oa2df()`](https://docs.ropensci.org/openalexR/reference/oa2df.md),
+which calls the appropriate conversion implementation depending on the
+type of entity being processed (e.g.,
+[`works2df()`](https://docs.ropensci.org/openalexR/reference/works2df.md)
+for Works entities).
+
+A lot of care goes into
+[`oa2df()`](https://docs.ropensci.org/openalexR/reference/oa2df.md) to
+return a compact, tidy-data representation of query results. But these
+operations can become a bottleneck to performance at scale, and so
+sometimes you may want to opt out of this automatic data frame
+conversion.
+
+To do so in
+[`oa_fetch()`](https://docs.ropensci.org/openalexR/reference/oa_fetch.md),
+you can set `output = "list"`, which will simply return the R list
+corresponding to the JSON response.
+
+``` r
+
+output_list <- oa_fetch(
+  entity = "works",
+  topics.id = language_development$id,
+  options = oa_options(sample = 5, seed = 1),
+  output = "list"
+)
+str(output_list, max.level = 1)
+#> List of 5
+#>  $ :List of 50
+#>  $ :List of 50
+#>  $ :List of 50
+#>  $ :List of 50
+#>  $ :List of 50
+```
+
+The list output can get quite unruly — each record contains dozens of
+fields, some of which may be multiply nested. Moreover, some records may
+have missing or incomplete fields, so extra care must be taken with the
+`output = "list"` approach.
+
+One advantage of returning the output as a list is that you can always
+come back to process them as data frames later. Instead of retrieving
+*and* converting the results simultaneously, which may stress
+[`oa_fetch()`](https://docs.ropensci.org/openalexR/reference/oa_fetch.md)
+for large queries, you can retrieve all the results first *and then*
+convert them after the fact.
+
+In our case, the Works entities can be processed with
+[`works2df()`](https://docs.ropensci.org/openalexR/reference/works2df.md)
+(or more generally, `oa2df(entity = "works")`), which returns a data
+frame identical to what we saw at the start with the default
+`output = "tibble"`:
+
+``` r
+
+works2df(output_list) %>% 
+  show_works()
+#> # A tibble: 5 × 6
+#>   id          display_name           first_author last_author is_oa top_concepts
+#>   <chr>       <chr>                  <chr>        <chr>       <lgl> <chr>       
+#> 1 W2270738576 Issues for acquisition Eve V. Clark <NA>        FALSE Computer sc…
+#> 2 W2539738643 Shame and guilt. The … Luce Bolomey Judith Hoh… FALSE Shame, Feel…
+#> 3 W7204471660 Working memory, updat… Fatbardha Q… Elma Beris… FALSE Association…
+#> 4 W4390202566 Narrative Microstruct… Mohyeddin T… Katayoon R… TRUE  Narrative, …
+#> 5 W3192646676 Parent Language Input… Ö. Ece Demi… Susan Gold… TRUE  Cognition, …
+```
+
+Additionally, opting out of the data frame conversion also means that
+you can use your own preferred implementation for converting the list
+output. This can be a very powerful optimization strategy when combined
+with the `select` option.
+
+For example, if you know that you are only selecting scalar fields, you
+can very quickly convert the list output into tidy data using more
+powerful tools like `data.table::rbindlist()` or even just
+[`rbind()`](https://rdrr.io/r/base/cbind.html):
+
+``` r
+
+oa_fetch(
+  entity = "works",
+  topics.id = language_development$id,
+  options = oa_options(sample = 5, seed = 1,
+                 select = c("id", "display_name", "cited_by_count")),
+  output = "list"
+) %>% 
+  do.call(rbind.data.frame, .) %>% 
+  as_tibble()
+#> # A tibble: 5 × 3
+#>   id                               display_name                   cited_by_count
+#>   <chr>                            <chr>                                   <int>
+#> 1 https://openalex.org/W2270738576 Issues for acquisition                      1
+#> 2 https://openalex.org/W2539738643 Shame and guilt. The birth of…              0
+#> 3 https://openalex.org/W7204471660 Working memory, updating and …              0
+#> 4 https://openalex.org/W4390202566 Narrative Microstructure and …              2
+#> 5 https://openalex.org/W3192646676 Parent Language Input Prior t…              7
+```
+
+## The `oa_generate()` strategy
+
+If your code still seems slow, it is possible that you may have run out
+of memory (especially when you do a snowball search like with
+`oa_snowball`). In such cases, it might help to chunk your work and save
+the output of each step, then piece them back together later in a
+different session/program.[^1]
+
+The
+[`oa_generate()`](https://docs.ropensci.org/openalexR/reference/oa_generate.md)
+function is a lower-level function that allows you to process one record
+at a time. This way, you can process records in batches of, say, 1000
+records, and write them out to disk as you go along.[^2]
+
+In the example below, we show how
+[`oa_generate()`](https://docs.ropensci.org/openalexR/reference/oa_generate.md)
+works when we want to find all the works that cite
+[W1160808132](https://openalex.org/works/W1160808132).
+
+``` r
+
+query_url <- "https://api.openalex.org/works?filter=cites%3AW1160808132"
+oar <- oa_generate(query_url, verbose = TRUE)
+p1 <- oar() # record 1
+#> Getting record 1 of 574 records...
+p2 <- oar() # record 2
+#> Getting record 2 of 574 records...
+p3 <- oar() # record 3
+#> Getting record 3 of 574 records...
+head(p1)
+#> $id
+#> [1] "https://openalex.org/W2766937672"
+#> 
+#> $doi
+#> [1] "https://doi.org/10.1016/j.enpol.2017.10.050"
+#> 
+#> $title
+#> [1] "How economic growth, renewable electricity and natural resources contribute to CO2 emissions?"
+#> 
+#> $display_name
+#> [1] "How economic growth, renewable electricity and natural resources contribute to CO2 emissions?"
+#> 
+#> $publication_year
+#> [1] 2017
+#> 
+#> $publication_date
+#> [1] "2017-11-22"
+head(p3)
+#> $id
+#> [1] "https://openalex.org/W2317269391"
+#> 
+#> $doi
+#> [1] "https://doi.org/10.1016/j.renene.2016.03.078"
+#> 
+#> $title
+#> [1] "Determinants of CO2 emissions in the European Union: The role of renewable and non-renewable energy"
+#> 
+#> $display_name
+#> [1] "Determinants of CO2 emissions in the European Union: The role of renewable and non-renewable energy"
+#> 
+#> $publication_year
+#> [1] 2016
+#> 
+#> $publication_date
+#> [1] "2016-03-31"
+```
+
+As you see, each record returned by `oa_generate` is a list of fields
+belonging to a work, parsed from the JSON response from OpenAlex. You
+can process these records as you see fit, such as writing them out as
+*.rds* files in batches of 100 records.
+
+``` r
+
+query_url <- "https://api.openalex.org/works?filter=cites%3AW1160808132"
+oar <- oa_generate(query_url)
+n <- 100
+recs <- vector("list", n)
+i <- 0
+
+coro::loop(for (x in oar) {
+  j <- i %% n + 1
+  recs[[j]] <- x
+  if (j == n) {
+    saveRDS(recs, file.path(tempdir(), sprintf("rec-%s.rds", i %/% n)))
+    recs <- vector("list", n) # reset recs
+  }
+  i <- i + 1
+})
+
+dir(tempdir(), pattern = "rec-\\d.rds$")
+#> [1] "rec-0.rds" "rec-1.rds" "rec-2.rds" "rec-3.rds"
+```
+
+### Tips on generating the query URL to the OpenAlex API
+
+To build your query, you can use
+[`oa_query()`](https://docs.ropensci.org/openalexR/reference/oa_query.md)
+and carefully read the [API
+documentation](https://developers.openalex.org/) to see what
+fields/filters are available. For example, I know `cites` is a filter we
+can use:
+
+``` r
+
+oa_query(entity = "works", cites = "W1160808132")
+#> [1] "https://api.openalex.org/works?filter=cites%3AW1160808132"
+```
+
+However, you might find it helpful to use the OpenAlex web interface to
+build the query
+[interactively](https://openalex.org/works?page=1&filter=authorships.author.id%3Aa5086928770,open_access.is_oa%3Atrue&view=list,report,api).
+Make sure you select the Gear icon on the right and toggle on “Api
+query”.
+
+![Screenshot of OpenAlex web interface for generating API query
+URLs](images/openalex-web.png)
+
+Screenshot of OpenAlex web interface for generating API query URLs
+
+[^1]: Determining whether memory is sufficient to store all records at
+    the beginning is not straightforward. We believe the (power) user
+    should be in charge of this step, combining \`count_only = TRUE\`
+    with their knowledge of their machine’s RAM specs to determine
+    whether they should write out the stepwise results themselves.
+    Related GH issues:
+    [here](https://github.com/ropensci/openalexR/issues/129#issuecomment-1642664363)
+    and
+    [here](https://github.com/ropensci/openalexR/issues/95#issuecomment-1513964112).
+
+[^2]: Quick note: For the case without `group_by`, setting
+    `verbose = TRUE` when you call `oar()` for the first time will give
+    the total number of records in the message. With `group_by`,
+    unfortunately we don’t have a way to know the total until we query
+    until exhausted. Also, you will need to have the R package
+    [**coro**](https://github.com/r-lib/coro) installed to use
+    [`oa_generate()`](https://docs.ropensci.org/openalexR/reference/oa_generate.md)
+    (`install.packages("coro")`).

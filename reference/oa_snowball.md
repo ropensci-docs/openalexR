@@ -1,0 +1,94 @@
+# A function to perform a snowball search and convert the result to a tibble/data frame.
+
+A function to perform a snowball search and convert the result to a
+tibble/data frame.
+
+## Usage
+
+``` r
+oa_snowball(
+  identifier = NULL,
+  ...,
+  id_type = c("short", "original"),
+  mailto = NULL,
+  endpoint = "https://api.openalex.org",
+  verbose = FALSE,
+  citing_params = list(),
+  cited_by_params = list()
+)
+```
+
+## Arguments
+
+- identifier:
+
+  Character vector of openalex identifiers.
+
+- ...:
+
+  Additional arguments to pass to \`oa_fetch\` when querying the input
+  works, such as \`doi\`.
+
+- id_type:
+
+  Type of OpenAlex IDs to return. Defaults to "short", which remove the
+  prefix https://openalex.org/ in the works' IDs, for example,
+  W2755950973. If "original", the OpenAlex IDs are kept as are, for
+  example, https://openalex.org/W2755950973
+
+- mailto:
+
+  Deprecated and ignored. OpenAlex retired the polite pool in February
+  2026 and now ignores the \`mailto\` parameter. Use \`api_key\`
+  instead.
+
+- endpoint:
+
+  Character. URL of the OpenAlex Endpoint API server. Defaults to
+  endpoint = "https://api.openalex.org".
+
+- verbose:
+
+  Logical. If TRUE, print information on querying process. Default to
+  `verbose = FALSE`. To shorten the printed query URL, set the
+  environment variable openalexR.print to the number of characters to
+  print: `Sys.setenv(openalexR.print = 70)`.
+
+- citing_params:
+
+  parameters used in the search of works citing the input works.
+
+- cited_by_params:
+
+  parameters used in the search of works cited by the input works.
+
+## Value
+
+A list containing 2 elements: - nodes: data frame with publication
+records. The last column \`oa_input\` indicates whether the work was one
+of the input \`identifier\`(s). - edges: publication link data frame of
+2 columns \`from, to\` such that a row \`A, B\` means A -\> B means A
+cites B. In bibliometrics, the "citation action" comes from A to B.
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+
+snowball_docs <- oa_snowball(
+  identifier = c("W2741809807", "W2755950973"),
+  citing_params = list(from_publication_date = "2022-01-01"),
+  cited_by_params = list(),
+  verbose = TRUE
+)
+
+# Identical to above, but searches using paper DOIs
+snowball_docs_doi <- oa_snowball(
+  doi = c("10.1016/j.joi.2017.08.007", "10.7717/peerj.4375"),
+  citing_params = list(from_publication_date = "2022-01-01"),
+  cited_by_params = list(),
+  verbose = TRUE
+)
+
+} # }
+```

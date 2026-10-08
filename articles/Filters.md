@@ -1,0 +1,238 @@
+# Filters
+
+In your `oa_fetch` calls, you can specify additional arguments to
+*filter* your search result. Available arguments/filters for each entity
+and associated example values are in the tables below.
+
+**Note**: `x_concepts.id` are being deprecated and will be removed soon!
+
+See the [OpenAlex
+documentation](https://developers.openalex.org/guides/filtering) for the
+latest list of valid filters.
+
+## Available arguments by entity
+
+### Works
+
+| Filter | Example value |
+|----|----|
+| `publication_year` | 2018 |
+| `publication_date` | "2018-02-13" |
+| `primary_location.source.issn` | "2167-8359" |
+| `primary_location.license` | "cc-by" |
+| `primary_location.source.host_organization` | "<https://openalex.org/P4310320104>" |
+| `primary_location.source.type` | "journal" |
+| `type` | "journal-article" |
+| `is_paratext` | TRUE |
+| `open_access.oa_status` | "gold" |
+| `open_access.is_oa` | TRUE |
+| `authorships.author.id` | "A1969205032" |
+| `authorships.author.orcid` | "0000-0003-1613-5981" |
+| `authorships.institutions.id` | "I4200000001" |
+| `authorships.institutions.ror` | "02nr0ka47" |
+| `authorships.institutions.country_code` | "US" |
+| `authorships.institutions.type` | "nonprofit" |
+| `cited_by_count` | 382 |
+| `is_retracted` | FALSE |
+| `concepts.id` | "C2778793908" |
+| `concepts.wikidata` | "<https://www.wikidata.org/wiki/Q5122404>" |
+| `doi` | "10.7717/peerj.4375" |
+| `ids.mag` | 2741809807 |
+| `ids.pmid` | "<https://pubmed.ncbi.nlm.nih.gov/23638343/>" |
+| `ids.pmcid` | "<https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3628373/>"\*\* |
+| `alternate_host_venues.license` | "cc-by" |
+| `alternate_host_venues.version` | "submittedVersion" |
+| `alternate_host_venues.venue_id` | "V1983995261" |
+| `display_name.search` | "wombat" |
+| `abstract.search` | "artificial intelligence" |
+| `fulltext.search` | "climate change" |
+| `raw_affiliation_string.search` | "department of political science university of Amsterdam" |
+| `has_abstract` | TRUE |
+| `has_doi` | FALSE |
+| `has_ngrams` | TRUE |
+| `has_references` | TRUE |
+| `cites` | "W2741809807" |
+| `cited_by` | "W2766808518" |
+| `related_to` | "W2486144666" |
+| `from_publication_date` | "2022-08-01" |
+| `to_publication_date` | "2022-08-11" |
+| `has_oa_accepted_or_published_version` | TRUE |
+| `has_oa_submitted_version` | TRUE |
+
+### Authors
+
+| Filter | Example value |
+|----|----|
+| `works_count` | "\>99" |
+| `cited_by_count` | "\>1000" |
+| `last_known_institutions.id` | "I4200000001" |
+| `last_known_institutions.ror` | "02nr0ka47" |
+| `last_known_institutions.country_code` | "CA" |
+| `last_known_institutions.type` | "nonprofit" |
+| `openalex` | "A2208157607" |
+| `orcid` | "0000-0001-6187-6610" |
+| `mag` | "2208157607" |
+| `twitter` | "jasonpriem" |
+| `wikipedia` | "<https://en.wikipedia.org/wiki/Jennifer_Doudna>" |
+| `scopus` | "<http://www.scopus.com/inward/authorDetails.url?authorID=36455008000&partnerID=MN8TOARS>" |
+| `x_concepts.id` | "C41008148" |
+| `display_name.search` | "tupolev" |
+| `search` | "Phillip Kuo" |
+| `has_orcid` | TRUE |
+
+### Sources
+
+| Filter                | Example value |
+|-----------------------|---------------|
+| `issn`                | "2167-8359"   |
+| `publisher`           | "Peerj"       |
+| `works_count`         | 20184         |
+| `cited_by_count`      | 133702        |
+| `x_concepts.id`       | "C185592680"  |
+| `is_oa`               | TRUE          |
+| `is_in_doaj`          | TRUE          |
+| `openalex`            | "V1983995261" |
+| `issn_l`              | "2167-8359"   |
+| `issn`                | "2167-8359"   |
+| `mag`                 | 1983995261    |
+| `display_name.search` | "Neurology"   |
+| `has_issn`            | FALSE         |
+
+### Institutions
+
+| Filter | Example value |
+|----|----|
+| `country_code` | "CN" |
+| `type` | "education" |
+| `works_count` | "\<999" |
+| `cited_by_count` | "\>20000" |
+| `x_concepts.id` | "C41008148" |
+| `display_name.search` | "technology" |
+| `has_ror` | FALSE |
+| `openalex` | "C41008148" |
+| `ror` | "0130frc33" |
+| `mag` | "114027177" |
+| `grid` | "grid.10698.36" |
+| `wikipedia` | "<https://en.wikipedia.org/wiki/University%20of%20North%20Carolina%20at%20Chapel%20Hill>" |
+| `wikidata` | "<https://www.wikidata.org/wiki/Q192334>" |
+
+### Concepts
+
+| Filter                | Example value                                |
+|-----------------------|----------------------------------------------|
+| `level`               | 3                                            |
+| `works_count`         | "\<999"                                      |
+| `cited_by_count`      | "\>10000"                                    |
+| `ancestors.id`        | "C161191863"                                 |
+| `openalex`            | "C2522767166"                                |
+| `wikidata_id`         | "Q14565201"                                  |
+| `mag`                 | "2778407487114027177"                        |
+| `wikipedia`           | "<https://en.wikipedia.org/wiki/Altmetrics>" |
+| `umls_aui`            |                                              |
+| `umls_cui`            |                                              |
+| `display_name.search` | "electrodynamics"                            |
+| `has_wikidata`        | FALSE                                        |
+
+## Examples
+
+``` r
+
+library(openalexR)
+
+# Unlike the other filters, search does NOT require an exact match. 
+# This is particularly useful to search for authors. Some authors have their middle names in a variety of forms, which may not exist, or co-exist in OpenAlex (e.g. Phillip H. Kuo, Phillip Hsin Kuo).  
+# The display_name search returns an exact match, and will NOT find all these variations. For example, author "Phillip H. Kuo" and "Phillip Hsin Kuo" is the same person.
+# His middle name is recorded differently in openAlex. Therefore, all the variations can only be found either using search ="Phillip Kuo" or display_name =c("Phillip H. Kuo" , "Phillip Hsin Kuo").
+
+authors_from_names <- oa_fetch(
+  entity = "authors", 
+  search = "Phillip Kuo"
+ )
+
+lib_topics <- oa_fetch(
+  entity = "topics", 
+  works_count = "<999",
+  cited_by_count = ">10000"
+)
+#> Warning: No records found!
+dplyr::glimpse(lib_topics)
+#>  NULL
+
+tech_insts <- oa_fetch(
+  entity = "institutions", 
+  country_code = "IL",
+  display_name.search = "technology"
+)
+dplyr::glimpse(tech_insts)
+#> Rows: 9
+#> Columns: 24
+#> $ id                         <chr> "https://openalex.org/I174306211", "https:/…
+#> $ display_name               <chr> "Technion – Israel Institute of Technology"…
+#> $ display_name_alternatives  <list> <"Technion", "Technion – Israel Institute …
+#> $ display_name_acronyms      <list> NA, NA, NA, <"CTEH", "HAIT", "HIT">, "JCT"…
+#> $ international_display_name <lgl> NA, NA, NA, NA, NA, NA, NA, NA, NA
+#> $ ror                        <chr> "https://ror.org/03qryx823", "https://ror.o…
+#> $ ids                        <list> <"https://openalex.org/I174306211", "https:…
+#> $ country_code               <chr> "IL", "IL", "IL", "IL", "IL", "IL", "IL", …
+#> $ geo                        <list> [<data.frame[1 x 7]>], [<data.frame[1 x 7]>…
+#> $ type                       <chr> "education", "facility", "company", "educa…
+#> $ homepage_url               <chr> "http://www.technion.ac.il/", "https://www.…
+#> $ image_url                  <chr> "https://commons.wikimedia.org/w/index.php?…
+#> $ image_thumbnail_url        <chr> "https://commons.wikimedia.org/w/index.php?…
+#> $ associated_institutions    <list> [<data.frame[2 x 6]>], NA, [<data.frame[1 x…
+#> $ relevance_score            <dbl> 29603.586000, 3886.640000, 3724.249300, 36…
+#> $ works_count                <int> 116228, 1945, 2677, 4516, 3986, 1562, 11, 0…
+#> $ cited_by_count             <int> 8292345, 117585, 87426, 101622, 88510, 2678…
+#> $ counts_by_year             <list> [<data.frame[17 x 4]>], [<data.frame[17 x 4…
+#> $ summary_stats              <list> <3.903185e+00, 7.240000e+02, 1.191310e+05>…
+#> $ status                     <chr> "active", "active", "active", "active", "a…
+#> $ works_api_url              <chr> "https://api.openalex.org/works?filter=inst…
+#> $ topics                     <list> [<tbl_df[100 x 5]>], [<tbl_df[100 x 5]>], […
+#> $ updated_date               <chr> "2026-09-01T05:59:40", "2026-09-01T05:59:4…
+#> $ created_date               <chr> "2016-06-24T00:00:00", "2022-02-02T04:48:36…
+
+peer_venues <- oa_fetch(
+  entity = "sources", 
+  display_name = "PeerJ",
+  is_oa = TRUE,
+  is_in_doaj = TRUE
+)
+dplyr::glimpse(peer_venues)
+#> Rows: 1
+#> Columns: 35
+#> $ id                         <chr> "https://openalex.org/S1983995261"
+#> $ issn_l                     <chr> "2167-8359"
+#> $ issn                       <list> "2167-8359"
+#> $ display_name               <chr> "PeerJ"
+#> $ host_organization          <chr> "https://openalex.org/P4310320104"
+#> $ host_organization_name     <chr> "PeerJ, Inc."
+#> $ host_organization_lineage  <list> "https://openalex.org/P4310320104"
+#> $ works_count                <int> 21560
+#> $ cited_by_count             <int> 449751
+#> $ summary_stats              <list> <3.37922, 168.00000, 11119.00000>
+#> $ is_oa                      <lgl> TRUE
+#> $ is_in_doaj                 <lgl> TRUE
+#> $ is_high_oa_rate            <lgl> TRUE
+#> $ is_high_oa_rate_since_year <int> 2013
+#> $ is_in_doaj_since_year      <int> 2013
+#> $ is_in_scielo               <lgl> FALSE
+#> $ is_ojs                     <lgl> FALSE
+#> $ is_preprint_repository     <lgl> FALSE
+#> $ oa_flip_year               <int> 2012
+#> $ oa_works_count             <int> 21560
+#> $ first_publication_year     <int> 1939
+#> $ last_publication_year      <int> 2026
+#> $ ids                        <list> <"https://openalex.org/S1983995261", "2167-…
+#> $ homepage_url               <chr> "http://www.peerj.com/"
+#> $ apc_prices                 <list> [<data.frame[1 x 2]>]
+#> $ apc_usd                    <int> 1395
+#> $ country_code               <chr> "US"
+#> $ societies                  <lgl> NA
+#> $ alternate_titles           <list> <"Peer j", "Peerj">
+#> $ type                       <chr> "journal"
+#> $ counts_by_year             <list> [<data.frame[14 x 4]>]
+#> $ works_api_url              <chr> "https://api.openalex.org/works?filter=prim…
+#> $ updated_date               <chr> "2026-09-01T10:02:46"
+#> $ created_date               <chr> "2016-06-24T00:00:00"
+#> $ topics                     <list> [<tbl_df[100 x 5]>]
+```
