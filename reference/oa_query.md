@@ -1,0 +1,164 @@
+# Generate an OpenAlex query from a set of parameters
+
+It generates a valid query, written following the OpenAlex API Language,
+from a set of parameters.
+
+## Usage
+
+``` r
+oa_query(
+  filter = NULL,
+  multiple_id = length(identifier) > 1,
+  identifier = NULL,
+  entity = if (is.null(identifier)) NULL else id_type(identifier[[1]]),
+  options = NULL,
+  search = NULL,
+  group_by = NULL,
+  endpoint = "https://api.openalex.org",
+  verbose = FALSE,
+  ...
+)
+```
+
+## Arguments
+
+- filter:
+
+  Character string. Filters narrow the list down to just entities that
+  meet a particular condition–specifically, a particular value for a
+  particular attribute. Filters are formatted as attribute = value. The
+  complete list of filter attributes for each entity can be found at
+  \<https://developers.openalex.org/guides/filtering\>. For example,
+  \`cited_by_count = "\>100"\`, \`title.search = c("bibliometric
+  analysis", "science mapping")\`, or \`to_publication_date =
+  "2021-12-31"\`.
+
+- multiple_id:
+
+  Logical. Whether there are multiple identifiers.
+
+- identifier:
+
+  Character. OpenAlex ID(s) as item identifier(s). See more at
+  \<https://developers.openalex.org/guides/get\>.
+
+- entity:
+
+  Character. Scholarly entity of the search. The argument can be one of
+  c("works", "authors", "institutions", "keywords", "funders",
+  "sources", "publishers", "topics"). If not provided, \`entity\` is
+  guessed from \`identifier\`.
+
+- options:
+
+  List or \`oa_options()\` object. Additional parameters to add to the
+  query, such as \`select\`, \`sort\`, \`sample\`, \`seed\`, and the
+  paging controls (\`per_page\`, \`paging\`, \`pages\`). See
+  \[oa_options()\] for the full list of options, their defaults, and
+  details. A plain named list (e.g. \`list(sort =
+  "cited_by_count:desc")\`) is also accepted for backward compatibility.
+
+- search:
+
+  Character. Search is just another kind of filter, one that all five
+  endpoints support. But unlike the other filters, search does NOT
+  require an exact match. This is particularly useful in author queries
+  because many authors have middle names, which may not exist or do so
+  in a variety of forms. The \`display_name\` filter requires an exact
+  match and will NOT find all these authors. For example, author
+  "Phillip H. Kuo" and "Phillip Hsin Kuo" can only be found either using
+  search = "Phillip Kuo" or display_name = c("Phillip H. Kuo", "Phillip
+  Hsin Kuo"). To filter using search, append .search to the end of the
+  attribute you're filtering for.
+
+- group_by:
+
+  Character. Attribute to group by. For example: "oa_status" for works.
+  See more at \<https://developers.openalex.org/guides/grouping\>.
+
+- endpoint:
+
+  Character. URL of the OpenAlex Endpoint API server. Defaults to
+  endpoint = "https://api.openalex.org".
+
+- verbose:
+
+  Logical. If TRUE, print information on querying process. Default to
+  `verbose = FALSE`. To shorten the printed query URL, set the
+  environment variable openalexR.print to the number of characters to
+  print: `Sys.setenv(openalexR.print = 70)`.
+
+- ...:
+
+  Additional filter arguments.
+
+## Value
+
+a character containing the query in OpenAlex format.
+
+For more extensive information about OpenAlex API, please visit:
+\<https://developers.openalex.org/\>.
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+
+query_auth <- oa_query(identifier = "A5069892096", verbose = TRUE)
+
+### EXAMPLE 1: Full record about an entity.
+
+# Query to obtain all information about a particular work/author/institution/etc.:
+
+#  The following paper is associated to the OpenAlex-id W2755950973.
+
+#  Aria, M., & Cuccurullo, C. (2017). bibliometrix:
+#   An R-tool for comprehensive science mapping analysis.
+#   Journal of informetrics, 11(4), 959-975.
+
+query_work <- oa_query(
+  identifier = "W2755950973",
+  verbose = TRUE
+)
+
+#  The author Massimo Aria is associated to the OpenAlex-id A5069892096:
+
+query_auth <- oa_query(identifier = "A5069892096", verbose = TRUE)
+
+### EXAMPLE 2: all works citing a particular work.
+
+# Query to search all works citing the article:
+#  Aria, M., & Cuccurullo, C. (2017). bibliometrix:
+#   An R-tool for comprehensive science mapping analysis.
+#   Journal of informetrics, 11(4), 959-975.
+
+#  published in 2021.
+#  The paper is associated to the OpenAlex id W2755950973.
+
+#  Results have to be sorted by relevance score in a descending order.
+
+query1 <- oa_query(
+  entity = "works",
+  cites = "W2755950973",
+  from_publication_date = "2021-01-01",
+  to_publication_date = "2021-12-31",
+  verbose = TRUE
+)
+
+### EXAMPLE 3: All works matching a string in their title
+
+# Query to search all works containing the exact string
+# "bibliometric analysis" OR "science mapping" in the title, published in the first half of 2021.
+
+# Results have to be sorted by relevance score in a descending order.
+
+query2 <- oa_query(
+  entity = "works",
+  title.search = c("bibliometric analysis", "science mapping"),
+  from_publication_date = "2021-01-01",
+  to_publication_date = "2021-06-30",
+  options = list(sort = "cited_by_count:desc"),
+  verbose = TRUE
+)
+} # }
+```

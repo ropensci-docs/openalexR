@@ -1,0 +1,193 @@
+# Fetching records
+
+A composition function to perform query building, requesting, and
+convert the result to a tibble/data frame.
+
+## Usage
+
+``` r
+oa_fetch(
+  entity = if (is.null(identifier)) {
+     NULL
+ } else {
+    
+    id_type(shorten_oaid(identifier[[1]]))
+ },
+  identifier = NULL,
+  ...,
+  options = NULL,
+  search = NULL,
+  group_by = NULL,
+  output = c("tibble", "dataframe", "list", "raw"),
+  abstract = TRUE,
+  endpoint = "https://api.openalex.org",
+  per_page = NULL,
+  paging = NULL,
+  pages = NULL,
+  count_only = FALSE,
+  mailto = NULL,
+  api_key = oa_apikey(),
+  verbose = FALSE,
+  timeout = 30
+)
+```
+
+## Arguments
+
+- entity:
+
+  Character. Scholarly entity of the search. The argument can be one of
+  c("works", "authors", "institutions", "keywords", "funders",
+  "sources", "publishers", "topics"). If not provided, \`entity\` is
+  guessed from \`identifier\`.
+
+- identifier:
+
+  Character. OpenAlex ID(s) as item identifier(s). See more at
+  \<https://developers.openalex.org/guides/get\>.
+
+- ...:
+
+  Additional filter arguments.
+
+- options:
+
+  List or \`oa_options()\` object. Additional parameters to add to the
+  query, such as \`select\`, \`sort\`, \`sample\`, \`seed\`, and the
+  paging controls (\`per_page\`, \`paging\`, \`pages\`). See
+  \[oa_options()\] for the full list of options, their defaults, and
+  details. A plain named list (e.g. \`list(sort =
+  "cited_by_count:desc")\`) is also accepted for backward compatibility.
+
+- search:
+
+  Character. Search is just another kind of filter, one that all five
+  endpoints support. But unlike the other filters, search does NOT
+  require an exact match. This is particularly useful in author queries
+  because many authors have middle names, which may not exist or do so
+  in a variety of forms. The \`display_name\` filter requires an exact
+  match and will NOT find all these authors. For example, author
+  "Phillip H. Kuo" and "Phillip Hsin Kuo" can only be found either using
+  search = "Phillip Kuo" or display_name = c("Phillip H. Kuo", "Phillip
+  Hsin Kuo"). To filter using search, append .search to the end of the
+  attribute you're filtering for.
+
+- group_by:
+
+  Character. Attribute to group by. For example: "oa_status" for works.
+  See more at \<https://developers.openalex.org/guides/grouping\>.
+
+- output:
+
+  Character. Type of output, one of \`"tibble"\`, \`"dataframe"\`,
+  \`"list"\`, or \`"raw"\`.
+
+  tibble
+
+  :   a tibble tidy data
+
+  dataframe
+
+  :   a base data.frame tidy data
+
+  list
+
+  :   a list of parsed JSON contents
+
+  raw
+
+  :   a list of raw JSON strings (length depends on query)
+
+- abstract:
+
+  Logical. If TRUE, the function returns also the abstract of each item.
+  Default to `abstract = TRUE`. The argument is ignored if entity is
+  different from "works".
+
+- endpoint:
+
+  Character. URL of the OpenAlex Endpoint API server. Defaults to
+  endpoint = "https://api.openalex.org".
+
+- per_page, paging, pages:
+
+  Deprecated as top-level arguments. Pass them through \`options =
+  oa_options(...)\` instead. If supplied here, they are forwarded to
+  \`options\` with a deprecation warning.
+
+- count_only:
+
+  Logical. If TRUE, the function returns only the number of item
+  matching the query. Defaults to FALSE.
+
+- mailto:
+
+  Deprecated and ignored. OpenAlex retired the polite pool in February
+  2026 and now ignores the \`mailto\` parameter. Use \`api_key\`
+  instead.
+
+- api_key:
+
+  Character string. Your OpenAlex Premium API key, if available.
+
+- verbose:
+
+  Logical. If TRUE, print information on querying process. Default to
+  `verbose = FALSE`. To shorten the printed query URL, set the
+  environment variable openalexR.print to the number of characters to
+  print: `Sys.setenv(openalexR.print = 70)`.
+
+- timeout:
+
+  Numeric. Number of seconds to wait for a response until giving up.
+  Cannot be less than 1 ms. Defaults to 30.
+
+## Value
+
+A data.frame or a list. Result of the query. Returns \`NULL\` when the
+query matched no records or when the API request failed; both cases emit
+a warning.
+
+## See also
+
+\[oa_options()\]
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+
+paper_meta <- oa_fetch(
+  identifier = "W2755950973",
+  entity = "works",
+  count_only = TRUE,
+  abstract = TRUE,
+  verbose = TRUE
+)
+
+oa_fetch(
+  entity = "works",
+  doi = c(
+    "10.1371/journal.pone.0266781",
+    "10.1371/journal.pone.0267149"
+  ),
+  verbose = TRUE,
+  count_only = TRUE
+)
+
+oa_fetch(
+  entity = "works",
+  doi = c(
+    "10.1371/journal.pone.0266781",
+    "10.1371/journal.pone.0267149"
+  ),
+  options = oa_options(select = c("doi", "id", "cited_by_count", "type")),
+  verbose = TRUE
+)
+
+oa_fetch(
+  identifier = c("A5069892096", "A5023888391"),
+  verbose = TRUE
+)
+} # }
+```

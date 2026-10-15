@@ -1,0 +1,13 @@
+{
+  "commit": {
+    "commit": "9bd5c2c8b59a6c5e71190009da4e3844d00883af",
+    "author": "lelaboratoire <grixor@gmail.com>",
+    "time": "2026-10-15T19:59:02Z",
+    "files": 3,
+    "merge": false,
+    "message": "Fix OpenAlex authentication for cursor pagination\n"
+  },
+  "repo": "https://github.com/ropensci/openalexR",
+  "pkg": "openalexR",
+  "time": "2026-10-15T20:32:53Z"
+}
