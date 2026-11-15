@@ -1,0 +1,13 @@
+{
+  "commit": {
+    "commit": "27625a5bbe8bc5ae6487574b4998bb73ea98c7aa",
+    "author": "Massimo Aria <massimo.aria@gmail.com>",
+    "time": "2026-11-15T18:07:00Z",
+    "files": 11,
+    "merge": true,
+    "message": "Merge pull request #380 from ropensci/fix/379-authorship-rows\n\nFix authorship row loss from observed ORCID lists"
+  },
+  "repo": "https://github.com/ropensci/openalexR",
+  "pkg": "openalexR",
+  "time": "2026-11-15T18:52:42Z"
+}
