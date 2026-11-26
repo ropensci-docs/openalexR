@@ -1,0 +1,299 @@
+# About the tibble output
+
+``` r
+
+library(openalexR)
+library(dplyr)
+```
+
+The default output from an `oa_fetch` call is a tibble. This object type
+allows each row to be one unit of entity (article, institution, etc.),
+which is often helpful for downstream wrangling. It **simplifies** and
+combines complex output elements in [list
+columns](https://dcl-prog.stanford.edu/list-columns.html), which can be
+**extracted** or **exploded** with
+[`dplyr::rowwise`](https://dplyr.tidyverse.org/reference/rowwise.html)
+or [`purrr::map`](https://purrr.tidyverse.org/reference/map.html).
+
+**IMPORTANT**: Although the list-to-tibble conversion can be trivial, in
+“flattening” the list output to a tibble, we took the opinionated
+approach and made a few decisions to simplify the original nested list
+such as retaining only a subset of the fields of *Works* (details in
+[`oa2df` source
+code](https://github.com/ropensci/openalexR/blob/main/R/oa2df.R)). If
+you think that everyone would benefit from an additional field being
+returned in the final dataframe, please [open an
+issue](https://github.com/ropensci/openalexR/issues/new).
+
+While the tibble output is sufficient in most use cases, you may need to
+obtain the original nested list with all the information on an entity
+for your special research problem. If so, please specify
+`output = "list"` in your `oa_fetch` call. Then, you can wrangle the
+list output however you like, for example:
+
+``` r
+
+x <- oa_fetch(
+  identifier = c("A5023888391", "A5042522694"),
+  output = "list"
+)
+d <- rrapply::rrapply(x, how = "melt")    
+head(d)
+#>   L1               L2   L3   L4   L5   L6                                 value
+#> 1  1               id <NA> <NA> <NA> <NA>      https://openalex.org/A5042522694
+#> 2  1            orcid <NA> <NA> <NA> <NA> https://orcid.org/0000-0002-1298-3089
+#> 3  1     display_name <NA> <NA> <NA> <NA>                         David Tarragó
+#> 4  1 raw_author_names    1 <NA> <NA> <NA>                             D Tarrago
+#> 5  1 raw_author_names    2 <NA> <NA> <NA>                             D Tarragó
+#> 6  1 raw_author_names    3 <NA> <NA> <NA>                            D. Tarrago
+```
+
+## Example 1: institutions
+
+Suppose we queried Open Alex to obtain information on large Canadian
+institutions and now want to **extract their latitudes and longitudes**.
+
+``` r
+
+institutions <- oa_fetch(
+  entity = "institutions",
+  country_code = "CA",
+  cited_by_count = ">4000000",
+  verbose = TRUE,
+  count_only = FALSE
+)
+#> Requesting url:
+#> <https://api.openalex.org/institutions?filter=country_code%3ACA%2Ccited_by_count%3A%3E4000000>
+#> ℹ Getting 1 page of results with a total of 29 records...
+
+head(institutions)
+#> # A tibble: 6 × 23
+#>   id                   display_name display_name_alterna…¹ display_name_acronyms
+#>   <chr>                <chr>        <list>                 <list>               
+#> 1 https://openalex.or… University … <chr [2]>              <lgl [1]>            
+#> 2 https://openalex.or… University … <chr [2]>              <chr [1]>            
+#> 3 https://openalex.or… McGill Univ… <chr [2]>              <lgl [1]>            
+#> 4 https://openalex.or… University … <chr [3]>              <lgl [1]>            
+#> 5 https://openalex.or… University … <chr [2]>              <chr [1]>            
+#> 6 https://openalex.or… McMaster Un… <chr [1]>              <lgl [1]>            
+#> # ℹ abbreviated name: ¹​display_name_alternatives
+#> # ℹ 19 more variables: international_display_name <lgl>, ror <chr>, ids <list>,
+#> #   country_code <chr>, geo <list>, type <chr>, homepage_url <chr>,
+#> #   image_url <chr>, image_thumbnail_url <chr>, associated_institutions <list>,
+#> #   works_count <int>, cited_by_count <int>, counts_by_year <list>,
+#> #   summary_stats <list>, status <chr>, works_api_url <chr>, topics <list>,
+#> #   updated_date <chr>, created_date <chr>
+```
+
+We present three different approaches below.
+
+### dplyr::rowwise
+
+The use of
+[`rowwise`](https://dplyr.tidyverse.org/articles/rowwise.html) used to
+be
+[discouraged](https://community.rstudio.com/t/dplyr-alternatives-to-rowwise/8071),
+but the tidyverse team has now recognized its importance in many
+workflows, and so `rowwise` is here to stay. We think `rowwise` pairs
+very naturally with our list columns output.
+
+``` r
+
+institutions %>%
+  rowwise() %>%
+  mutate(
+    name = display_name,
+    openalex = stringr::str_extract(id, "I\\d+"),
+    lat = geo$latitude,
+    lon = geo$longitude,
+    .keep = "none"
+  )
+#> # A tibble: 29 × 4
+#> # Rowwise: 
+#>    name                           openalex     lat    lon
+#>    <chr>                          <chr>      <dbl>  <dbl>
+#>  1 University of Toronto          I185261750  43.7  -79.4
+#>  2 University of British Columbia I141945490  49.2 -123. 
+#>  3 McGill University              I5023651    45.5  -73.6
+#>  4 University of Alberta          I154425047  53.6 -113. 
+#>  5 University of Calgary          I168635309  51.1 -114. 
+#>  6 McMaster University            I98251732   43.3  -79.8
+#>  7 Université de Montréal         I70931966   45.5  -73.6
+#>  8 Western University             I125749732  43.0  -81.2
+#>  9 University of Ottawa           I153718931  45.4  -75.7
+#> 10 University of Waterloo         I151746483  43.5  -80.5
+#> # ℹ 19 more rows
+```
+
+### purrr::map
+
+Alternatively, you can use any function in the
+[`purrr::map`](https://purrr.tidyverse.org/reference/map.html) family.
+As you can see below, the syntax is a little less natural, but you *may*
+gain some performance advantage if you have a really large dataframe.
+
+``` r
+
+institutions %>%
+  mutate(
+    name = display_name,
+    openalex = stringr::str_extract(id, "I\\d+"),
+    lat = purrr::map_dbl(geo, ~ .x$latitude),
+    lon = purrr::map_dbl(geo, ~ .x$longitude),
+    .keep = "none"
+  )
+#> # A tibble: 29 × 4
+#>    name                           openalex     lat    lon
+#>    <chr>                          <chr>      <dbl>  <dbl>
+#>  1 University of Toronto          I185261750  43.7  -79.4
+#>  2 University of British Columbia I141945490  49.2 -123. 
+#>  3 McGill University              I5023651    45.5  -73.6
+#>  4 University of Alberta          I154425047  53.6 -113. 
+#>  5 University of Calgary          I168635309  51.1 -114. 
+#>  6 McMaster University            I98251732   43.3  -79.8
+#>  7 Université de Montréal         I70931966   45.5  -73.6
+#>  8 Western University             I125749732  43.0  -81.2
+#>  9 University of Ottawa           I153718931  45.4  -75.7
+#> 10 University of Waterloo         I151746483  43.5  -80.5
+#> # ℹ 19 more rows
+```
+
+### base::lapply
+
+Similar to the purrr approach, you can use the base functions in the
+`lapply` family, for example:
+
+``` r
+
+institutions %>%
+  mutate(
+    name = display_name,
+    openalex = stringr::str_extract(id, "I\\d+"),
+    lat = vapply(geo, function(x) x$latitude, numeric(1)),
+    lon = vapply(geo, function(x) x$longitude, numeric(1)),
+    .keep = "none"
+  )
+#> # A tibble: 29 × 4
+#>    name                           openalex     lat    lon
+#>    <chr>                          <chr>      <dbl>  <dbl>
+#>  1 University of Toronto          I185261750  43.7  -79.4
+#>  2 University of British Columbia I141945490  49.2 -123. 
+#>  3 McGill University              I5023651    45.5  -73.6
+#>  4 University of Alberta          I154425047  53.6 -113. 
+#>  5 University of Calgary          I168635309  51.1 -114. 
+#>  6 McMaster University            I98251732   43.3  -79.8
+#>  7 Université de Montréal         I70931966   45.5  -73.6
+#>  8 Western University             I125749732  43.0  -81.2
+#>  9 University of Ottawa           I153718931  45.4  -75.7
+#> 10 University of Waterloo         I151746483  43.5  -80.5
+#> # ℹ 19 more rows
+```
+
+## Example 2: works
+
+Suppose we have a tibble of **works** output and would like to find the
+institutions corresponding with the works’ authors. In this case, each
+work may have more than one affiliated institution.
+
+### Tibble output
+
+Assuming that each author is affiliated with only one institution, we
+can call `oa_fetch` with the default `output = "tibble"`:
+
+``` r
+
+works <- oa_fetch(
+  entity = "works",
+  title.search = c("bibliometric analysis", "science mapping"),
+  cited_by_count = ">100",
+  from_publication_date = "2020-01-01",
+  to_publication_date = "2021-01-31",
+  options = oa_options(sort = "cited_by_count:desc"),
+  count_only = FALSE
+)
+```
+
+We will store the result in a list column:
+
+``` r
+
+multi_insts <- works %>%
+  rowwise() %>%
+  mutate(
+    openalex = stringr::str_extract(id, "W\\d+"),
+    institutions = list(unique(authorships$institution_display_name)),
+    .keep = "none"
+  )
+#> Warning: There were 144 warnings in `mutate()`.
+#> The first warning was:
+#> ℹ In argument: `institutions =
+#>   list(unique(authorships$institution_display_name))`.
+#> ℹ In row 1.
+#> Caused by warning:
+#> ! Unknown or uninitialised column: `institution_display_name`.
+#> ℹ Run `dplyr::last_dplyr_warnings()` to see the 143 remaining warnings.
+
+multi_insts
+#> # A tibble: 144 × 2
+#> # Rowwise: 
+#>    openalex    institutions
+#>    <chr>       <list>      
+#>  1 W3001491100 <NULL>      
+#>  2 W3044902155 <NULL>      
+#>  3 W3038273726 <NULL>      
+#>  4 W2998021954 <NULL>      
+#>  5 W3042215340 <NULL>      
+#>  6 W3005144120 <NULL>      
+#>  7 W3003683721 <NULL>      
+#>  8 W3025370095 <NULL>      
+#>  9 W3000049009 <NULL>      
+#> 10 W3040069742 <NULL>      
+#> # ℹ 134 more rows
+
+# institutions of the first work
+str(multi_insts[1, "institutions"])
+#> rowws_df [1 × 1] (S3: rowwise_df/tbl_df/tbl/data.frame)
+#>  $ institutions:List of 1
+#>   ..$ : NULL
+#>  - attr(*, "groups")= tibble [1 × 1] (S3: tbl_df/tbl/data.frame)
+#>   ..$ .rows: list<int> [1:1] 
+#>   .. ..$ : int 1
+#>   .. ..@ ptype: int(0)
+```
+
+### List output
+
+If we want to get *all* the institutions that the authors of these works
+are affiliated with (since one author may be affiliated with more than
+one institution), you would want to work with the list output.
+
+As you can see, the nested list can be more convoluted to work with:
+
+``` r
+
+works_list <- oa_fetch(
+  entity = "works",
+  title.search = c("bibliometric analysis", "science mapping"),
+  cited_by_count = ">100",
+  from_publication_date = "2020-01-01",
+  to_publication_date = "2021-01-31",
+  options = oa_options(sort = "cited_by_count:desc"),
+  output = "list"
+)
+
+work_authors <- lapply(works_list, \(x) x$authorships)
+
+unique_insts <- sapply(
+  work_authors,
+  \(z) unique(unlist(
+    sapply(
+      z, \(y) sapply(y$institutions, \(x) x$display_name)
+    )
+  ))
+)
+
+unique_insts[[1]]
+#> [1] "Universidad de Cádiz"                 
+#> [2] "Universidad de Granada"               
+#> [3] "Hospital Universitario Puerta del Mar"
+```

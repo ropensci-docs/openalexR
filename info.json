@@ -1,0 +1,13 @@
+{
+  "commit": {
+    "commit": "9eb71fb1716126e935538815c82d81dff112d61b",
+    "author": "trangdata <grixor@gmail.com>",
+    "time": "2026-11-26T18:49:58Z",
+    "files": 5,
+    "merge": false,
+    "message": "Fix OpenAlex integration test failures\n"
+  },
+  "repo": "https://github.com/ropensci/openalexR",
+  "pkg": "openalexR",
+  "time": "2026-11-26T19:09:58Z"
+}
